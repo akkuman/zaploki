@@ -1,6 +1,7 @@
 package zaploki
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -146,16 +147,20 @@ func (c *LokiCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.C
 func (c *LokiCore) Write(ent zapcore.Entry, fs []zapcore.Field) error {
 	clone := c.with(fs)
 
+	// convert fields map to json
+	fieldsBytes, _ := json.Marshal(clone.fields)
+	fieldString := string(fieldsBytes)
+
 	lvl := promtailLevel[ent.Level]
 	switch lvl {
 	case promtail.DEBUG:
-		c.clients[ent.Level].Debugf("%s | %s", ent.Message, clone.fields)
+		c.clients[ent.Level].Debugf("%s | fields: %s", ent.Message, fieldString)
 	case promtail.INFO:
-		c.clients[ent.Level].Infof("%s | %s", ent.Message, clone.fields)
+		c.clients[ent.Level].Infof("%s | fields: %s", ent.Message, fieldString)
 	case promtail.WARN:
-		c.clients[ent.Level].Warnf("%s | %s", ent.Message, clone.fields)
+		c.clients[ent.Level].Warnf("%s | fields: %s", ent.Message, fieldString)
 	case promtail.ERROR:
-		c.clients[ent.Level].Errorf("%s | %s", ent.Message, clone.fields)
+		c.clients[ent.Level].Errorf("%s | fields: %s", ent.Message, fieldString)
 	default:
 		return fmt.Errorf("unknown log level")
 	}
