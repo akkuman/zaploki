@@ -154,10 +154,10 @@ func (c *LokiCore) Write(ent zapcore.Entry, fs []zapcore.Field) error {
 
 	message := fmt.Sprintf("%s | fields: %s", ent.Message, fieldString)
 	if ent.Caller != zapcore.EntryCaller{} {
-		message = fmt.Sprintf("%s\nfile: %s:%d\nfunc: %s", ent.Caller.File, ent.Caller.Line, ent.Caller.Function)
+		message = fmt.Sprintf("%s\nfile: %s:%d\nfunc: %s", message, ent.Caller.File, ent.Caller.Line, ent.Caller.Function)
 	}
 	if ent.Stack != "" {
-		message = fmt.Sprintf("%s\nstack: %s", ent.Stack)
+		message = fmt.Sprintf("%s\nstack: %s", message, ent.Stack)
 	}
 
 	lvl := promtailLevel[ent.Level]
