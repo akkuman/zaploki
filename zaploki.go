@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/afiskon/promtail-client/promtail"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -151,16 +152,24 @@ func (c *LokiCore) Write(ent zapcore.Entry, fs []zapcore.Field) error {
 	fieldsBytes, _ := json.Marshal(clone.fields)
 	fieldString := string(fieldsBytes)
 
+	message := fmt.Sprintf("%s | fields: %s", ent.Message, fieldString)
+	if ent.Caller != zapcore.EntryCaller{} {
+		message = fmt.Sprintf("%s\nfile: %s:%d\nfunc: %s", ent.Caller.File, ent.Caller.Line, ent.Caller.Function)
+	}
+	if ent.Stack != "" {
+		message = fmt.Sprintf("%s\nstack: %s", ent.Stack)
+	}
+
 	lvl := promtailLevel[ent.Level]
 	switch lvl {
 	case promtail.DEBUG:
-		c.clients[ent.Level].Debugf("%s | fields: %s", ent.Message, fieldString)
+		c.clients[ent.Level].Debugf(message)
 	case promtail.INFO:
-		c.clients[ent.Level].Infof("%s | fields: %s", ent.Message, fieldString)
+		c.clients[ent.Level].Infof(message)
 	case promtail.WARN:
-		c.clients[ent.Level].Warnf("%s | fields: %s", ent.Message, fieldString)
+		c.clients[ent.Level].Warnf(message)
 	case promtail.ERROR:
-		c.clients[ent.Level].Errorf("%s | fields: %s", ent.Message, fieldString)
+		c.clients[ent.Level].Errorf(message)
 	default:
 		return fmt.Errorf("unknown log level")
 	}
